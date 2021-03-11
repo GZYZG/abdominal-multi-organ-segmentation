@@ -210,7 +210,7 @@ class Net(nn.Module):
 
         # 得到第一阶段的结果
         output_stage1 = self.stage1(inputs_stage1)
-        output_stage1 = F.upsample(output_stage1, (48, 256, 256), mode='trilinear')
+        output_stage1 = F.upsample(output_stage1, (48, 512, 512), mode='trilinear')
 
         # 将第一阶段的结果与原始输入数据进行拼接作为第二阶段的输入
         inputs_stage2 = torch.cat((output_stage1, inputs), dim=1)

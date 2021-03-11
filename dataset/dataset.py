@@ -56,9 +56,9 @@ class Dataset(dataset):
         return len(self.ct_list)
 
 
-ct_dir = '/home/zcy/Desktop/train/CT/' \
+ct_dir = '../train/CT/' \
     if on_server is False else './train/CT/'
-seg_dir = '/home/zcy/Desktop/train/GT/' \
+seg_dir = '../train/GT/' \
     if on_server is False else './train/GT/'
 
 train_ds = Dataset(ct_dir, seg_dir)
@@ -72,9 +72,10 @@ train_ds = Dataset(ct_dir, seg_dir)
 # filepath = syn3379050.path
 
 # # 测试代码
-# from torch.utils.data import DataLoader
-# train_dl = DataLoader(train_ds, 6, True)
-# for index, (ct, seg) in enumerate(train_dl):
-#
-#     print(index, ct.size(), seg.size())
-#     print('----------------')
+if __name__ == "__main__":
+    from torch.utils.data import DataLoader
+    train_dl = DataLoader(train_ds, 6, True)
+    for index, (ct, seg) in enumerate(train_dl):
+
+        print(index, ct.size(), seg.size())
+        print('----------------')
