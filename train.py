@@ -13,21 +13,24 @@ from net.ResUnet_dice import net
 from loss.ava_Dice_loss import DiceLoss
 from dataset.dataset import train_ds
 import sys
+from config import config
 
 if __name__ == "__main__":
     # 定义超参数
     on_server = True
+    device = config.device
     print(f"{sys.argv[0]}\n\n")
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # if on_server is False else '1,2,3'
     cudnn.benchmark = True
-    Epoch = 3000
+    Epoch = config.epoch
     leaing_rate = 1e-4
 
-    batch_size = 1 if on_server is False else 3
-    num_workers = 1 if on_server is False else 2
+    batch_size = config.batch_size
+    num_workers = 1 if on_server is False else 1
     pin_memory = False if on_server is False else True
 
-    net = torch.nn.DataParallel(net).cuda(0)
+    net = net.to(device)
+    # net = torch.nn.DataParallel(net)  # .cuda(0)
 
     # 定义数据加载
     train_dl = DataLoader(train_ds, batch_size, True, num_workers=num_workers, pin_memory=pin_memory)
@@ -51,7 +54,7 @@ if __name__ == "__main__":
 
         for step, (ct, seg) in enumerate(train_dl):
 
-            ct = ct.cuda()
+            ct = ct.to(device)  # .cuda()
 
             outputs_stage1, outputs_stage2 = net(ct)
             loss = loss_func(outputs_stage1, outputs_stage2, seg)

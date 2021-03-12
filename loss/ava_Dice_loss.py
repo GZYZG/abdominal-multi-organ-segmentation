@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+from config import config
 
 num_organ = 13
 
@@ -22,7 +23,7 @@ class DiceLoss(nn.Module):
         """
 
         # 首先将金标准拆开
-        organ_target = torch.zeros((target.size(0), num_organ, 48, 256, 256))
+        organ_target = torch.zeros((target.size(0), num_organ, 48, 512, 512))
 
         for organ_index in range(1, num_organ + 1):
             temp_target = torch.zeros(target.size())
@@ -30,7 +31,7 @@ class DiceLoss(nn.Module):
             organ_target[:, organ_index - 1, :, :, :] = temp_target
             # organ_target: (B, 13, 48, 128, 128)
 
-        organ_target = organ_target.cuda()
+        organ_target = organ_target.to(config.device)
 
         # 计算第一阶段的loss
         dice_stage1 = 0.0

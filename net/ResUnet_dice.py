@@ -170,9 +170,15 @@ class ResUNet(nn.Module):
         short_range6 = self.up_conv2(outputs)
 
         outputs = self.decoder_stage2(torch.cat([short_range6, long_range3], dim=1)) + short_range6
+
+        del short_range1, short_range2, short_range3, short_range4, short_range6, long_range3, long_range4,
+
         outputs = F.dropout(outputs, dropout_rate, self.training)
 
         short_range7 = self.up_conv3(outputs)
+
+        del outputs
+        torch.cuda.empty_cache()
 
         outputs = self.decoder_stage3(torch.cat([short_range7, long_range2], dim=1)) + short_range7
         outputs = F.dropout(outputs, dropout_rate, self.training)
@@ -215,6 +221,7 @@ class Net(nn.Module):
         # 将第一阶段的结果与原始输入数据进行拼接作为第二阶段的输入
         inputs_stage2 = torch.cat((output_stage1, inputs), dim=1)
 
+        torch.cuda.empty_cache()
         # 得到第二阶段的结果
         output_stage2 = self.stage2(inputs_stage2)
 
