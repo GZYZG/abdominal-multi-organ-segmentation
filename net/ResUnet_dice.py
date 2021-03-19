@@ -9,6 +9,8 @@ ResUNet整体上网络结构基于VNet，做出的修改如下：
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from config import config
+
 
 dropout_rate = 0.3
 num_organ = 13
@@ -212,11 +214,11 @@ class Net(nn.Module):
         共18656348个可训练的参数，一千八百万左右
         """
         # 首先将输入缩小一倍
-        inputs_stage1 = F.upsample(inputs, (48, 128, 128), mode='trilinear')
+        inputs_stage1 = F.upsample(inputs, (config.slice_num, 128, 128), mode='trilinear')
 
         # 得到第一阶段的结果
         output_stage1 = self.stage1(inputs_stage1)
-        output_stage1 = F.upsample(output_stage1, (48, 512, 512), mode='trilinear')
+        output_stage1 = F.upsample(output_stage1, (config.slice_num, 512, 512), mode='trilinear')
 
         # 将第一阶段的结果与原始输入数据进行拼接作为第二阶段的输入
         inputs_stage2 = torch.cat((output_stage1, inputs), dim=1)

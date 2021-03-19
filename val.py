@@ -27,8 +27,11 @@ import numpy as np
 import SimpleITK as sitk
 import xlsxwriter as xw
 import scipy.ndimage as ndimage
+from collections import OrderedDict
 
-from net.ResUnet import Net
+from net.ResUnet_dice import Net
+from config import config
+
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -37,12 +40,12 @@ val_seg_dir = './val/GT/'
 
 organ_pred_dir = './val/pred/'
 
-module_dir = './module/net170-0.943-1.055.pth'
+module_dir = './module/net2480-0.718-0.812.pth'  # './module/net170-0.943-1.055.pth'
 
 upper = 350
 lower = -upper
 down_scale = 0.5
-size = 48
+size = config.slice_num
 slice_thickness = 3
 
 
@@ -94,8 +97,14 @@ worksheet.write(15, 0, 'shape')
 
 
 # 定义网络并加载参数
-net = torch.nn.DataParallel(Net(training=False)).cuda()
-net.load_state_dict(torch.load(module_dir))
+net = Net(training=False)
+net.to(config.device)
+if config.on_gpu:
+    net = torch.nn.DataParallel(net).cuda(0)
+# net = torch.nn.DataParallel(Net(training=False)).cuda()
+state_dict = torch.load(module_dir, map_location=config.device)
+state_dict = OrderedDict([(k.replace('module.', ''), v) for k, v in state_dict.items()])
+net.load_state_dict(state_dict)
 net.eval()
 
 
@@ -113,7 +122,7 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
     ct_array[ct_array < lower] = lower
 
     # 对CT使用双三次算法进行插值，插值之后的array依然是int16
-    ct_array = ndimage.zoom(ct_array, (ct.GetSpacing()[-1] / slice_thickness, down_scale, down_scale), order=3)
+    # ct_array = ndimage.zoom(ct_array, (ct.GetSpacing()[-1] / slice_thickness, down_scale, down_scale), order=3)
 
     # 在轴向上进行切块取样
     flag = False
@@ -137,7 +146,7 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
     with torch.no_grad():
         for ct_array in ct_array_list:
 
-            ct_tensor = torch.FloatTensor(ct_array).cuda()
+            ct_tensor = torch.FloatTensor(ct_array).to(config.device)  #.cuda()
             ct_tensor = ct_tensor.unsqueeze(dim=0)
             ct_tensor = ct_tensor.unsqueeze(dim=0)
 

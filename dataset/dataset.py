@@ -8,9 +8,10 @@ import random
 import SimpleITK as sitk
 import torch
 from torch.utils.data import Dataset as dataset
+from config import config
 
 on_server = True
-size = 48
+size = config.slice_num
 
 
 class Dataset(dataset):
@@ -57,9 +58,9 @@ class Dataset(dataset):
 
 
 ct_dir = '../train/CT/' \
-    if on_server is False else './train/CT/'
+    if on_server is False else '/home/gzy/medical/abdominal-multi-organ-segmentation/train/CT/'
 seg_dir = '../train/GT/' \
-    if on_server is False else './train/GT/'
+    if on_server is False else '/home/gzy/medical/abdominal-multi-organ-segmentation/train/GT/'
 
 train_ds = Dataset(ct_dir, seg_dir)
 
