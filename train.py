@@ -5,13 +5,12 @@
 import os
 import time
 
-import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-
 from net.ResUnet_dice import net
 from loss.ava_Dice_loss import DiceLoss
-from dataset.dataset import train_ds
+from data_prepare.dataset import train_ds
+from utils.utils import *
 import sys
 from config import config
 
@@ -48,11 +47,8 @@ if __name__ == "__main__":
     # 训练网络
     start = time.time()
     for epoch in range(Epoch):
-
         lr_decay.step()
-
         mean_loss = []
-
 
         for step, (ct, seg) in enumerate(train_dl):
 
@@ -76,6 +72,7 @@ if __name__ == "__main__":
         # 每十个个epoch保存一次模型参数
         # 网络模型的命名方式为：epoch轮数+当前minibatch的loss+本轮epoch的平均loss
         if epoch % 10 == 0:
-            torch.save(net.state_dict(),
-                       '/home/gzy/medical/abdominal-multi-organ-segmentation/module/net{}-{:.3f}-{:.3f}.pth'.format(epoch, loss.item(), mean_loss))
-
+            save_model(epoch, net, opt, opt, loss_func,
+                       os.path.join(config.model_dir, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}.pth"))
+            # torch.save(net.state_dict(),
+            #            os.path.join(config.model_path, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}.pth"))
