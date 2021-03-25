@@ -143,7 +143,6 @@ class ResUNet(nn.Module):
         )
 
     def forward(self, inputs):
-
         if self.stage is 'stage1':
             long_range1 = self.encoder_stage1(inputs) + inputs
         else:
@@ -173,14 +172,14 @@ class ResUNet(nn.Module):
 
         outputs = self.decoder_stage2(torch.cat([short_range6, long_range3], dim=1)) + short_range6
 
-        del short_range1, short_range2, short_range3, short_range4, short_range6, long_range3, long_range4,
+        # del short_range1, short_range2, short_range3, short_range4, short_range6, long_range3, long_range4,
 
         outputs = F.dropout(outputs, dropout_rate, self.training)
 
         short_range7 = self.up_conv3(outputs)
 
-        del outputs
-        torch.cuda.empty_cache()
+        # del outputs
+        # torch.cuda.empty_cache()
 
         outputs = self.decoder_stage3(torch.cat([short_range7, long_range2], dim=1)) + short_range7
         outputs = F.dropout(outputs, dropout_rate, self.training)

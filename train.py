@@ -4,7 +4,7 @@
 
 import os
 import time
-
+import pandas as pd
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from net.ResUnet_dice import net
@@ -44,9 +44,19 @@ if __name__ == "__main__":
     # 学习率衰减
     lr_decay = torch.optim.lr_scheduler.MultiStepLR(opt, [900])
 
+    if config.restore_training:
+        checkpoint = load_model(net, opt, lr_decay, config.checkpoint_path)
+        net, opt, lr_decay, start_epoch = checkpoint['model'], checkpoint['optimizer'], checkpoint['lr_schedule'], \
+                                          checkpoint['epoch']
+        print(f"{'*' * 5}\tRestore model from {config.checkpoint_path}...")
+    else:
+        start_epoch = 0
+        print(f"{'*' * 5}\tTraining model from the start...")
     # 训练网络
     start = time.time()
-    for epoch in range(Epoch):
+    all_loss = []
+    best_mean_loss = 1e10
+    for epoch in range(start_epoch, Epoch):
         lr_decay.step()
         mean_loss = []
 
@@ -67,12 +77,24 @@ if __name__ == "__main__":
                 print('epoch:{}, step:{}, loss:{:.3f}, time:{:.3f} min    {}'
                       .format(epoch, step, loss.item(), (time.time() - start) / 60, time.strftime('%Y-%m-%d %H:%M:%S')))
 
+        all_loss.append(mean_loss.copy())
         mean_loss = sum(mean_loss) / len(mean_loss)
 
         # 每十个个epoch保存一次模型参数
         # 网络模型的命名方式为：epoch轮数+当前minibatch的loss+本轮epoch的平均loss
-        if epoch % 10 == 0:
-            save_model(epoch, net, opt, opt, loss_func,
-                       os.path.join(config.model_dir, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}.pth"))
-            # torch.save(net.state_dict(),
-            #            os.path.join(config.model_path, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}.pth"))
+        if mean_loss < best_mean_loss:
+            best_mean_loss = mean_loss
+            if epoch > 1000:
+                # if epoch % 10 == 0:
+                try:
+                    # best_mean_loss = mean_loss
+                    save_model(epoch, net, opt, opt, loss_func,
+                               os.path.join(config.model_dir, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}.pth"))
+                except Exception as exp:
+                    print(f"{'! ' * 10}\tError occurs while saving model to {config.model_dir}. Error info: {exp}")
+                # torch.save(net.state_dict(),
+                #            os.path.join(config.model_path, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}.pth"))
+
+    df = pd.DataFrame(data={'mean_loss': all_loss, 'epoch': list(range(start_epoch, Epoch))},
+                      columns=['epoch', 'mean_loss'])
+    df.to_csv(os.path.join(config.output_dir, f"mean_loss_{time.strftime('%Y-%m-%d %H-%M-%S')}.csv"), index=False)

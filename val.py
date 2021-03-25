@@ -40,7 +40,7 @@ val_seg_dir = './val/GT/'
 
 organ_pred_dir = './val/pred/'
 
-module_dir = './module/net2480-0.718-0.812.pth'  # './module/net170-0.943-1.055.pth'
+module_dir = 'output/module/net2480-0.718-0.812.pth'  # './module/net170-0.943-1.055.pth'
 
 upper = 350
 lower = -upper
