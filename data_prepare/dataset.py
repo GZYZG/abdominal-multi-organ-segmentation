@@ -8,12 +8,12 @@ import scipy.ndimage as ndimage
 import SimpleITK as sitk
 import torch
 from torch.utils.data import Dataset as dataset
-from config import config
+from config.config import config
 
 on_server = True
 size = config.slice_num
 slice_thickness = 3
-down_scale = .5
+down_scale = 1
 
 
 class Dataset(dataset):
@@ -49,8 +49,8 @@ class Dataset(dataset):
         seg_array = seg_array[start_slice:end_slice + 1, :, :]
 
         # 对CT使用双三次算法进行插值，插值之后的array依然是int16
-        ct_array = ndimage.zoom(ct_array, (1, down_scale, down_scale), order=3)
-        seg_array = ndimage.zoom(seg_array, (1, down_scale, down_scale), order=3)
+        # ct_array = ndimage.zoom(ct_array, (1, down_scale, down_scale), order=3)
+        # seg_array = ndimage.zoom(seg_array, (1, down_scale, down_scale), order=3)
 
         # 处理完毕，将array转换为tensor
         ct_array = torch.FloatTensor(ct_array).unsqueeze(0)
@@ -63,10 +63,8 @@ class Dataset(dataset):
         return len(self.ct_list)
 
 
-ct_dir = '../train/CT/' \
-    if on_server is False else os.path.join(config.train_dataset_dir, "CT")  # '/home/gzy/medical/abdominal-multi-organ-segmentation/train/CT/'
-seg_dir = '../train/GT/' \
-    if on_server is False else os.path.join(config.train_dataset_dir, "GT")  # '/home/gzy/medical/abdominal-multi-organ-segmentation/train/GT/'
+ct_dir = os.path.join(config.train_dataset_dir, "CT")  # '/home/gzy/medical/abdominal-multi-organ-segmentation/train/CT/'
+seg_dir = os.path.join(config.train_dataset_dir, "GT")  # '/home/gzy/medical/abdominal-multi-organ-segmentation/train/GT/'
 
 train_ds = Dataset(ct_dir, seg_dir)
 
