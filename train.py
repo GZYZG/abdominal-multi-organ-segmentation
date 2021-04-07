@@ -36,7 +36,8 @@ if __name__ == "__main__":
         net = net.cuda(gpu_ids[0])
 
     # 定义数据加载
-    train_dl = DataLoader(train_ds, batch_size, True, num_workers=num_workers, pin_memory=pin_memory)
+    shuffle = False
+    train_dl = DataLoader(train_ds, batch_size, shuffle, num_workers=num_workers, pin_memory=pin_memory)
 
     # 定义损失函数
     loss_func = DiceLoss()
@@ -49,8 +50,9 @@ if __name__ == "__main__":
 
     if config.restore_training:
         checkpoint = load_model(net, opt, lr_decay, config.checkpoint_path)
-        net, opt, lr_decay, start_epoch = checkpoint['model'], checkpoint['optimizer'], checkpoint['lr_schedule'], \
+        net, opt, lr_decay, save_epoch = checkpoint['model'], checkpoint['optimizer'], checkpoint['lr_schedule'], \
                                           checkpoint['epoch']
+        start_epoch = save_epoch + 1
         print(f"{'*' * 5}\tRestore model from {config.checkpoint_path}...")
     else:
         start_epoch = 0
@@ -94,12 +96,23 @@ if __name__ == "__main__":
                                os.path.join(config.model_dir, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}-"
                                                               f"{config.CT_width}x{config.CT_height}.pth"))
 
+                    mean_loss_save_path = os.path.join(config.output_dir, f"mean_loss-{config.CT_width}x{config.CT_height}.csv")
+                    if os.path.exists(mean_loss_save_path):
+                        saved = pd.read_csv(mean_loss_save_path)
+                    else:
+                        saved = pd.DataFrame(columns=['epoch', 'mean_loss'])
+                    df = pd.DataFrame(data={'mean_loss': all_loss, 'epoch': list(range(start_epoch, epoch+1))},
+                                      columns=['epoch', 'mean_loss'])
+
+                    saved = pd.concat([saved, df], axis=0)
+                    saved.to_csv(mean_loss_save_path, index=False)
+                    all_loss.clear()
+                    start_epoch = epoch + 1
+                    # df.to_csv(os.path.join(config.output_dir, f"mean_loss-{time.strftime('%Y-%m-%d %H-%M-%S')} - "
+                    #                                         f"{config.CT_width}x{config.CT_height}.csv"), index=False)
                 except Exception as exp:
                     print(f"{'! ' * 10}\tError occurs while saving model to {config.model_dir}. Error info: {exp}")
                 # torch.save(net.state_dict(),
                 #            os.path.join(config.model_path, f"net{epoch}-{loss.item():.3f}-{mean_loss:.3f}.pth"))
 
-    df = pd.DataFrame(data={'mean_loss': all_loss, 'epoch': list(range(start_epoch, Epoch))},
-                      columns=['epoch', 'mean_loss'])
-    df.to_csv(os.path.join(config.output_dir, f"mean_loss-{time.strftime('%Y-%m-%d %H-%M-%S')} - "
-                                              f"{config.CT_width}x{config.CT_height}.csv"), index=False)
+

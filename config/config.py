@@ -9,11 +9,11 @@ use_gpu = True
 gpu_count = torch.cuda.device_count()
 device = f"cuda:0" if use_gpu else 'cpu'
 parser.add_argument('--device', default=device, help="device to train model")
-parser.add_argument('--batch_size', type=int, default=3, help='batch size while training')
+parser.add_argument('--batch_size', type=int, default=2, help='batch size while training')
 parser.add_argument('--epoch', type=int, default=2000, help="epochs to train")
 parser.add_argument('--num_workers', type=int, default=3, help='Num of workers to load data')
 parser.add_argument('--on_gpu', type=bool, default=use_gpu, help='Run on GPU or not')
-parser.add_argument('--restore_training', type=bool, default=False, help="Restore training or not")
+parser.add_argument('--restore_training', type=bool, default=True, help="Restore training or not")
 
 # arguments about path info
 # proj_root = "/home/gzy/medical/abdominal-multi-organ-segmentation/"
@@ -28,7 +28,7 @@ val_dataset_dir = os.path.join(dataset_dir, "val")
 test_dataset_dir = os.path.join(dataset_dir, "test")
 output_dir = os.path.join(proj_root, "output")
 model_dir = os.path.join(output_dir, "module")
-model_name = "net1209-0.978-0.858.pth"
+model_name = "net49-0.989-1.400-512x512.pth"
 
 parser.add_argument("--project_root", type=str, default=proj_root, help="Root path of current project")
 parser.add_argument("--dataset_dir", type=str, default=dataset_dir, help="Dataset dir path")
@@ -44,6 +44,6 @@ width = 512
 height = 512
 parser.add_argument('--CT_width', type=int, default=width, help='Width of CT slices')
 parser.add_argument('--CT_height', type=int, default=height, help='Height of CT slices')
-parser.add_argument('--slice_num', type=int, default=16, help='Selected num of slices in a CT')
+parser.add_argument('--slice_num', type=int, default=32, help='Selected num of slices in a CT')
 
 config = parser.parse_args()

@@ -6,6 +6,8 @@ def dcm2nii(dcms_path, nii_path):
     reader = sitk.ImageSeriesReader()
     dicom_names = reader.GetGDCMSeriesFileNames(dcms_path)
     reader.SetFileNames(dicom_names)
+    reader.MetaDataDictionaryArrayUpdateOn()
+    reader.LoadPrivateTagsOn()
     image2 = reader.Execute()
     # 2.将整合后的数据转为array，并获取dicom文件基本信息
     image_array = sitk.GetArrayFromImage(image2)  # z, y, x
