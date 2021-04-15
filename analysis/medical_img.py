@@ -3,6 +3,24 @@ import SimpleITK as sitk
 import matplotlib.pyplot as plt
 import vtk
 from config import config
+import threading
+"""
+共13种器官＋背景
+(0) 背景
+(1) spleen 脾
+(2) right kidney 右肾
+(3) left kidney 左肾
+(4) gallbladder 胆囊
+(5) esophagus 食管
+(6) liver 肝脏
+(7) stomach 胃
+(8) aorta 大动脉
+(9) inferior vena cava 下腔静脉
+(10) portal vein and splenic vein 门静脉和脾静脉
+(11) pancreas 胰腺
+(12) right adrenal gland 右肾上腺
+(13) left adrenal gland 左肾上腺
+"""
 
 
 class MyEvent(vtk.vtkInteractorStyleTrackballCamera):
@@ -15,34 +33,35 @@ class MyEvent(vtk.vtkInteractorStyleTrackballCamera):
         self.AddObserver("RightButtonReleaseEvent", self.right_button_release_event)
 
     def middle_button_press_event(self, obj, event):
-        print("Middle Button pressed")
+        # print("Middle Button pressed")
         self.OnMiddleButtonDown()
         return
 
     def middle_button_release_event(self, obj, event):
-        print("Middle Button released")
+        # print("Middle Button released")
         self.OnMiddleButtonUp()
         return
 
     def left_button_press_event(self, obj, event):
-        print("Left Button pressed")
+        # print("Left Button pressed")
         self.OnLeftButtonDown()
         return
 
     def left_button_release_event(self, obj, event):
-        print("Left Button released")
+        # print("Left Button released")
         self.OnLeftButtonUp()
         return
 
     def right_button_press_event(self, obj, event):
-        print("right Button pressed")
+        # print("right Button pressed")
         self.OnRightButtonDown()
         return
 
     def right_button_release_event(self, obj, event):
-        print("right Button released")
+        # print("right Button released")
         self.OnLeftButtonUp()
         return
+
 
 def nii2dcm_2(nii_path: str, dcm_path: str):
     image = sitk.ImageSeriesReader_GetGDCMSeriesIDs().ReadImage("01.dcm")  # 读取一个含有头信息的dicom格式的医学图像
@@ -95,7 +114,7 @@ def viz_NII_3D_VR(nii_path):
     color = vtk.vtkColorTransferFunction()
     color.AddRGBPoint(0, 255, 255, 255)
     for i in range(1, 14):
-        color.AddRGBPoint(i, i/13, i/13, i/13)
+        color.AddRGBPoint(i, i/13, i/13, 0)
         # color.AddRGBPoint(2, 0.042, 0.73, 0.55)
         # color.AddRGBPoint(3, 0.088, 0.67, 0.88)
         # color.AddRGBPoint(4, 0.088, 0.67, 0.88, 0.33, 0.45)
@@ -126,6 +145,8 @@ def viz_NII_3D_VR(nii_path):
 
     iren = vtk.vtkRenderWindowInteractor()
     iren.SetRenderWindow(renWin)
+    iren.SetInteractorStyle(MyEvent())
+    iren.Initialize()
     renWin.SetSize(600, 600)
     renWin.Render()
     iren.Start()
@@ -136,10 +157,38 @@ def create_color_table():
     pColorTable = vtk.vtkLookupTable()
     color_num = 13
     pColorTable.SetNumberOfColors(color_num)
-    for c in range(color_num):
-        r, g, b, a = [0, 1, .5, .5]
+    for c in range(1, color_num+1):
+        r, g, b, a = [c/13, 1, .5, c/13]
         pColorTable.SetTableValue(c, r, g, b, a)
     return pColorTable
+
+
+def interact(actor, renderer):
+    print("Welcome to interact threading ... ")
+    cmd = None
+    while True:
+        try:
+            cmd = input("Input commands to interact with objects(q to quit, enter to execute): ")
+            cmd = cmd.strip()
+            if cmd == "q":
+                break
+            else:
+                cmds = cmd.split(' ')
+                if cmds[0] == "cc":
+                    color = list(map(float, cmds[1:]))
+                    actor.GetProperty().SetColor(*color)
+                elif cmds[0] == "co":
+                    opacity = float(cmds[1])
+                    actor.GetProperty().SetOpacity(opacity)
+                else:
+                    print(f"Unsupported command: {cmd}")
+                    continue
+            print(f"Your input is {cmd}")
+        except Exception as exp:
+            print(f"Exception occurs while executing command: {cmd}, error info: {exp}")
+
+
+    return
 
 
 def viz_NII_3D_SR(nii_path):
@@ -167,11 +216,12 @@ def viz_NII_3D_SR(nii_path):
 
     surface_mapper = vtk.vtkPolyDataMapper()
     surface_mapper.SetInputConnection(surface_normals.GetOutputPort())
-    surface_mapper.ScalarVisibilityOff()
     clr_table = create_color_table()
     clr_table.Build()
     surface_mapper.SetScalarRange(0, 14)
     surface_mapper.SetLookupTable(clr_table)
+    surface_mapper.ScalarVisibilityOn()
+
     actor = vtk.vtkActor()
     actor.SetMapper(surface_mapper)
 
@@ -181,7 +231,12 @@ def viz_NII_3D_SR(nii_path):
     #     color.AddRGBPoint(i, i / 13, i / 13, i / 13)
     # property = vtk.vtkProperty()
     # property.SetColor(color)
-    actor.GetProperty().SetColor(1, 0, 0)  # (property)
+
+    popacity = vtk.vtkPiecewiseFunction()
+    for i in range(0, 14):
+        popacity.AddPoint(i, i / 14)
+    # actor.GetProperty().SetScalarOpacity(popacity)
+    # actor.GetProperty().SetColor(1, 0, 0)  # (property)
 
     ren = vtk.vtkRenderer()
     ren.AddActor(actor)
@@ -197,10 +252,15 @@ def viz_NII_3D_SR(nii_path):
     renWin.SetSize(600, 600)
 
     renWin.Render()
+
+    t = threading.Thread(target=interact, args=(actor, renWin ))
+    t.setDaemon(True)
+    t.start()
+
     iren.Start()
 
 
 if __name__ == "__main__":
     # nii2dcm("../dataset/1.nii.gz", "../dataset/4/")
     nii_path = os.path.join(config.val_dataset_dir, "GT/label0004.nii.gz")
-    viz_NII_3D_VR(nii_path)
+    viz_NII_3D_SR(nii_path)

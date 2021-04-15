@@ -28,7 +28,7 @@ val_dataset_dir = os.path.join(dataset_dir, "val")
 test_dataset_dir = os.path.join(dataset_dir, "test")
 output_dir = os.path.join(proj_root, "output")
 model_dir = os.path.join(output_dir, "module")
-model_name = "net435-0.797-1.272-512x512.pth"
+model_name = "net483-0.794-1.269-512x512.pth"
 
 parser.add_argument("--project_root", type=str, default=proj_root, help="Root path of current project")
 parser.add_argument("--dataset_dir", type=str, default=dataset_dir, help="Dataset dir path")
