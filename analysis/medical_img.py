@@ -3,6 +3,7 @@ import SimpleITK as sitk
 import matplotlib.pyplot as plt
 import vtk
 from config import config
+from config.vis_config import VizConfig
 import threading
 """
 共13种器官＋背景
@@ -155,21 +156,23 @@ def viz_NII_3D_VR(nii_path):
 def create_color_table():
     # 创建一个颜色映射表，若是不自己定义，系统会使用默认的
     pColorTable = vtk.vtkLookupTable()
-    color_num = 13
+    color_num = len(VizConfig.init_organ_colors)
     pColorTable.SetNumberOfColors(color_num)
-    for c in range(1, color_num+1):
-        r, g, b, a = [c/13, 1, .5, c/13]
+    for c in range(1, color_num):
+        r, g, b, a = VizConfig.init_organ_colors.get(c)  # [c/13, 1, .5, c/13]
         pColorTable.SetTableValue(c, r, g, b, a)
     return pColorTable
 
 
-def interact(actor, renderer):
+def interact(actor, color_table):
     print("Welcome to interact threading ... ")
     cmd = None
+    supported_cmds = ['q', 'cc', 'co', 'organs', 'c-og-c', 'c-og-o', 'v']
     while True:
         try:
             cmd = input("Input commands to interact with objects(q to quit, enter to execute): ")
             cmd = cmd.strip()
+            prompt = ""
             if cmd == "q":
                 break
             else:
@@ -177,13 +180,33 @@ def interact(actor, renderer):
                 if cmds[0] == "cc":
                     color = list(map(float, cmds[1:]))
                     actor.GetProperty().SetColor(*color)
+                    prompt = f"change color to {color} successful ..."
                 elif cmds[0] == "co":
                     opacity = float(cmds[1])
                     actor.GetProperty().SetOpacity(opacity)
+                    prompt = f"change opacity to {opacity} successful ..."
+                elif cmds[0] == "organs":
+                    prompt = f"Organs: {VizConfig.organs.items()}"
+                elif cmds[0] == "c-og-c":
+                    organ_idx = int(cmds[1])
+                    color = list(map(float, cmds[2:]))
+                    original_rgba = list(color_table.GetTableValue(organ_idx))
+                    original_rgba[:len(color)] = color
+                    color_table.SetTableValue(organ_idx, *original_rgba)
+                    prompt = f"change organ {VizConfig.organs[organ_idx]}'s color to {color} successful ... "
+                elif cmds[0] == "c-og-o":
+                    organ_idx = int(cmds[1])
+                    opacity = float(cmds[2])
+                    original_rgba = list(color_table.GetTableValue(organ_idx))
+                    original_rgba[-1] = opacity
+                    color_table.SetTableValue(organ_idx, *original_rgba)
+                    prompt = f"change organ {VizConfig.organs[organ_idx]}'s opacity to {opacity} successful ... "
+                elif cmds[0] == 'v':
+                    prompt = f"Supported Commands: {supported_cmds} "
                 else:
-                    print(f"Unsupported command: {cmd}")
-                    continue
-            print(f"Your input is {cmd}")
+                    prompt = f"Unsupported command: {cmd}"
+
+            print(prompt)
         except Exception as exp:
             print(f"Exception occurs while executing command: {cmd}, error info: {exp}")
 
@@ -210,8 +233,13 @@ def viz_NII_3D_SR(nii_path):
     #
     # reader.GetOutput().GetPointData().SetScalars(scalars)
 
+    smooth_filter = vtk.vtkSmoothPolyDataFilter()
+    smooth_filter.SetInputConnection(surface.GetOutputPort())
+    smooth_filter.SetNumberOfIterations(200)
+    smooth_filter.Update()
+
     surface_normals = vtk.vtkPolyDataNormals()
-    surface_normals.SetInputConnection(surface.GetOutputPort())
+    surface_normals.SetInputConnection(smooth_filter.GetOutputPort())
     surface_normals.SetFeatureAngle(90)
 
     surface_mapper = vtk.vtkPolyDataMapper()
@@ -253,7 +281,7 @@ def viz_NII_3D_SR(nii_path):
 
     renWin.Render()
 
-    t = threading.Thread(target=interact, args=(actor, renWin ))
+    t = threading.Thread(target=interact, args=(actor, clr_table ))
     t.setDaemon(True)
     t.start()
 
@@ -262,5 +290,5 @@ def viz_NII_3D_SR(nii_path):
 
 if __name__ == "__main__":
     # nii2dcm("../dataset/1.nii.gz", "../dataset/4/")
-    nii_path = os.path.join(config.val_dataset_dir, "GT/label0004.nii.gz")
+    nii_path = os.path.join(config.val_dataset_dir, "pred/organ0004.nii.gz")
     viz_NII_3D_SR(nii_path)

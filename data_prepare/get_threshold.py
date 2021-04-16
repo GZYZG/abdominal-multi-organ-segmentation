@@ -2,14 +2,17 @@
 获取合理的阈值，将原始数据的灰度值截断到一定的范围内
 减少无关数据的影响
 实验记录在下方，综合实验结果，最终选择±350
+
+单纯选择截断会降低数据的对比度
 """
 
 import os
 import SimpleITK as sitk
+from config.config import config
 
 
-ct_path = '/home/zcy/Desktop/dataset/multi-organ/test/CT'
-seg_path = '/home/zcy/Desktop/dataset/multi-organ/test/GT'
+ct_path = os.path.join(config.train_dataset_dir, "CT")  # '/home/zcy/Desktop/dataset/multi-organ/test/CT'
+seg_path = os.path.join(config.train_dataset_dir, "GT")  # '/home/zcy/Desktop/dataset/multi-organ/test/GT'
 
 # 定于阈值
 upper = 350
