@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 - 标准化：
     在机器学习中，我们可能要处理不同种类的资料，例如，音讯和图片上的像素值，这些资料可能是高维度的，
     资料标准化后会使每个特征中的数值平均变为0(将每个特征的值都减掉原始资料中该特征的平均)、标准差变为1，
-    这个方法被广泛的使用在许多机器学习算法中(例如：支持向量机、逻辑回归和类神经网络)。
+    这个方法被广泛的使用在许多机器学习算法中(例如：支持向量机、逻辑回归和类神经网络)。也可以对样本进行标准化。
     
 - 中心化：
     平均值为0，对标准差无要求
@@ -204,36 +204,46 @@ def show_gray_hist(gray_hist):
 
 
 def get_start_end(nii_label):
-    start = len(nii_label)-1
-    end = 0
+    start = 0
+    end = len(nii_label)-1
     for idx, label in enumerate(nii_label):
-        if np.alltrue(label == 0):
+        if not np.alltrue(label == 0):
             start = idx
             break
-    for idx in range(len(nii_label)-1, 0):
-        if np.alltrue(nii_label[idx] == 0):
+    for idx in range(len(nii_label)-1, 0, -1):
+        if not np.alltrue(nii_label[idx] == 0):
             end = idx
             break
 
     return start, end
 
 
-if __name__ == "__main__":
-    nii_name = "img0004.nii.gz"
-    ct_path = os.path.join(config.val_dataset_dir, f"CT/{nii_name}")
-    gt_path = os.path.join(config.val_dataset_dir, f"GT/{nii_name.replace('img', 'label')}")
-    ct_data = itk.ReadImage(ct_path)
-    gt_data = itk.ReadImage(gt_path)
-    imgs = itk.GetArrayFromImage(ct_data)
-    segs = itk.GetArrayFromImage(gt_data)
-    i = 100
-    upper = 1000
-    lower = -upper
-    truncated = True
-    normalized = True
-    norm = "minmax"
+def Resampling(img, label=False, new_spacing=[1, 1, 1]):
+    original_size = img.GetSize() #获取图像原始尺寸
+    original_spacing = img.GetSpacing() #获取图像原始分辨率
+    new_spacing = new_spacing #设置图像新的分辨率为1*1*1
 
-    # imgs_copy = preprocess(imgs.copy(), norm=norm, truncated=True, upper=upper)
+    new_size = [int(round(original_size[0] * (original_spacing[0] /new_spacing[0]))),
+                int(round(original_size[1] * (original_spacing[1] / new_spacing[1]))),
+                int(round(original_size[2] * (original_spacing[2] / new_spacing[2])))] #计算图像在新的分辨率下尺寸大小
+    resampleSliceFilter = itk.ResampleImageFilter() #初始化
+    if label is False:
+        Resampleimage = resampleSliceFilter.Execute(img, new_size, itk.Transform(), itk.sitkBSpline,
+                                                img.GetOrigin(), new_spacing, img.GetDirection(), 0,
+                                                img.GetPixelIDValue())
+        # ResampleimageArray = itk.GetArrayFromImage(Resampleimage)
+        # ResampleimageArray[ResampleimageArray < 0] = 0 #将图中小于0的元素置为0
+    else:  # for label, should use sitk.sitkLinear to make sure the original and resampled label are the same!!!
+        Resampleimage = resampleSliceFilter.Execute(img, new_size, itk.Transform(), itk.sitkLinear,
+                                                    img.GetOrigin(), new_spacing, img.GetDirection(), 0,
+                                                    img.GetPixelIDValue())
+        # ResampleimageArray = itk.GetArrayFromImage(Resampleimage)
+
+    return Resampleimage
+
+
+def test(imgs):
+    norm = "minmax"
     for idx, img in enumerate(imgs):
         X = imgs[idx].copy().reshape(1, -1)
         img = normalize(X, norm=norm).reshape(imgs[idx].shape[0], -1)
@@ -253,27 +263,135 @@ if __name__ == "__main__":
 
         img_norm = linear_out
 
-        # 对图像进行预处理
-        masks = mask_body(img.copy(), thresh=10)
-        img_processed = np.zeros_like(img)
-        if len(masks) != 0:
-            for mask in masks:
-                img_processed += np.where(mask == 1, img, mask)
-        # img = preprocess(img_norm, norm=norm, truncated=False, upper=upper)[0]
+        # 掩盖图像中非身体的部分 --- 效果不佳
+        # masks = mask_body(img.copy(), thresh=10)
+        # img_processed = np.zeros_like(img)
+        # if len(masks) != 0:
+        #     for mask in masks:
+        #         img_processed += np.where(mask == 1, img, mask)
 
         win_name1 = f"Input-NO.{idx}"
         win_name2 = f"Output-NO.{idx}"
         win_name3 = f"NO.{idx}-slice preprocessing"
         cv2.imshow(win_name1, imgs[idx])
         cv2.imshow(win_name2, img_norm)
-        cv2.imshow(win_name3, img)
+        cv2.imshow(win_name3, img/255)
 
         cv2.moveWindow(win_name1, x=0, y=0)
         cv2.moveWindow(win_name2, x=400, y=0)
         cv2.moveWindow(win_name3, x=850, y=0)
 
-        cv2.waitKey()
+        key = cv2.waitKeyEx()
+        # print(f"Input key is {key}")
+        if key == ord('q'):
+            break
         cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    train_dataset = os.listdir(os.path.join(config.train_dataset_dir, "CT"))
+    val_dataset = os.listdir(os.path.join(config.val_dataset_dir, "CT"))
+
+    train_label = os.listdir(os.path.join(config.train_dataset_dir, "GT"))
+    val_label = os.listdir(os.path.join(config.val_dataset_dir, "GT"))
+
+    # print(dataset)
+    i = 10
+    nii_name = train_dataset[i]
+    ct_path = os.path.join(config.train_dataset_dir, f"CT/{nii_name}")
+    gt_path = os.path.join(config.train_dataset_dir, f"GT/{nii_name.replace('img', 'label')}")
+
+    ct_data = itk.ReadImage(ct_path)
+    gt_data = itk.ReadImage(gt_path)
+    imgs = itk.GetArrayFromImage(ct_data)
+    segs = itk.GetArrayFromImage(gt_data)
+
+    upper = 1000
+    lower = -upper
+    truncated = True
+    normalized = True
+    resampled = False
+    croped = True
+    norm = "minmax"
+
+    # for nii in train_dataset:
+    #     ct_path = os.path.join(config.train_dataset_dir, f"CT/{nii}")
+    #     image = itk.ReadImage(ct_path)
+    #     print(f"{nii} : {image.GetSize()}\t{image.GetSpacing()}\t{image.GetOrigin()}")
+
+    # 将图像进行重采样，使得其满足图像的shape为(512,512)，slice的厚度为1
+    # origin_spacing = np.array(ct_data.GetSpacing())
+    # origin_size = np.array(ct_data.GetSize())
+    # new_spacing = origin_size * origin_spacing / 512
+    # new_spacing[-1] = 1  # [*ct_data.GetSpacing()[:2], 1]
+    # itkimgResampled = Resampling(gt_data, new_spacing=new_spacing, label=True)
+    # restore_image = Resampling(itkimgResampled, new_spacing=origin_spacing, label=True)
+
+    prep_dirs = [config.prep_train_dataset_dir, config.prep_val_dataset_dir]
+    # 处理CT数据
+    for idx, dir in enumerate([config.train_dataset_dir, config.val_dataset_dir]):
+        if not os.path.exists(os.path.join(prep_dirs[idx], "CT")):
+            os.makedirs(os.path.join(prep_dirs[idx], "CT"))
+
+        if not os.path.exists(os.path.join(prep_dirs[idx], "GT")):
+            os.makedirs(os.path.join(prep_dirs[idx], "GT"))
+
+        dataset = os.listdir(os.path.join(dir, "CT"))
+
+        for nii in dataset:
+            ct = os.path.join(dir, f"CT/{nii}")
+            seg = os.path.join(dir, f"GT/{nii.replace('img', 'label')}")
+            ct_image = itk.ReadImage(ct)
+            gt_image = itk.ReadImage(seg)
+
+            if resampled:
+                # 将图像进行重采样，使得其满足图像的shape为(512,512)，slice的厚度为1
+                origin_spacing = np.array(ct_image.GetSpacing())
+                origin_size = np.array(ct_image.GetSize())
+                new_spacing = origin_size * origin_spacing / 512
+                new_spacing[-1] = 1  # [*ct_data.GetSpacing()[:2], 1]
+
+                ct_resampled = Resampling(ct_image, label=False, new_spacing=new_spacing)
+                gt_resampled = Resampling(gt_image, label=True, new_spacing=new_spacing)
+                if set(range(14)) != set(itk.GetArrayFromImage(gt_resampled).flatten()):
+                    raise RuntimeError("Label value is not in the right range!")
+            else:
+                ct_resampled = ct_image
+                gt_resampled = gt_image
+
+            if croped:
+                # 将无分割目标的图像略去
+                start, end = get_start_end(itk.GetArrayFromImage(gt_resampled))
+                print(f"{nii} : resampled total={gt_resampled.GetSize()[-1]}, origin total={gt_image.GetSize()[-1]},"
+                      f" start={start}, end={end}, start ratio={start / gt_resampled.GetSize()[-1]}, end ratio={end / gt_resampled.GetSize()[-1]}")
+                start = start-3 if start >= 3 else 0
+                end = end if end == gt_resampled.GetSize()[-1]-1 else end + 1
+                gt_crop_array = itk.GetArrayFromImage(gt_resampled)[start: end]
+                gt_croped = itk.GetImageFromArray(gt_crop_array)
+                ct_crope_array = itk.GetArrayFromImage(ct_resampled)[start: end]
+                ct_croped = itk.GetImageFromArray(ct_crope_array)
+            else:
+                gt_croped = gt_resampled
+                ct_croped = ct_resampled
+
+            if normalized:
+                # 对图像进行预处理
+                ct_croped_array = itk.GetArrayFromImage(ct_croped)
+                prep_ct_array = preprocess(ct_croped_array.copy(), norm=norm, truncated=False, mask=False)
+                prep_ct = itk.GetImageFromArray(prep_ct_array)
+                prep_ct.SetOrigin(ct_resampled.GetOrigin())
+                prep_ct.SetSpacing(ct_resampled.GetSpacing())
+                prep_ct.SetDirection(ct_resampled.GetDirection())
+                prep_gt = gt_croped
+            else:
+                prep_gt = gt_croped
+                prep_ct = ct_croped
+
+            itk.WriteImage(prep_ct, os.path.join(prep_dirs[idx], f"CT/{nii}"))
+            itk.WriteImage(prep_gt, os.path.join(prep_dirs[idx], f"GT/{nii.replace('img', 'label')}"))
+
+
+
 
 
 

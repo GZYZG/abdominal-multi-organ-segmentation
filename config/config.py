@@ -28,6 +28,9 @@ val_dataset_dir = os.path.join(dataset_dir, "val")
 test_dataset_dir = os.path.join(dataset_dir, "test")
 output_dir = os.path.join(proj_root, "output")
 model_dir = os.path.join(output_dir, "module")
+prep_train_dataset_dir = os.path.join(dataset_dir, "prep_train")
+prep_val_dataset_dir = os.path.join(dataset_dir, "prep_val")
+
 model_name = "net538-0.794-1.267-512x512.pth"
 
 parser.add_argument("--project_root", type=str, default=proj_root, help="Root path of current project")
@@ -37,7 +40,11 @@ parser.add_argument("--train_dataset_dir", type=str, default=train_dataset_dir, 
 parser.add_argument("--val_dataset_dir", type=str, default=val_dataset_dir, help="Val dataset dir")
 parser.add_argument("--test_dataset_dir", type=str, default=test_dataset_dir, help="Test Dataset dir")
 parser.add_argument("--output_dir", type=str, default=output_dir, help="Output dir")
-parser.add_argument('--checkpoint_path', type=str, default=os.path.join(model_dir, model_name), help="Checkpoint file path")
+parser.add_argument("--prep_train_dataset_dir", type=str, default=prep_train_dataset_dir, help="Preprocessed train dataset")
+parser.add_argument("--prep_val_dataset_dir", type=str, default=prep_val_dataset_dir, help="Preprocessed val dataset")
+
+parser.add_argument('--checkpoint_path', type=str, default=os.path.join(model_dir, model_name),
+                    help="Checkpoint file path")
 
 # arguments about model's in/out put
 width = 512
