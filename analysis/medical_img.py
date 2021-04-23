@@ -225,6 +225,7 @@ def viz_NII_3D_SR(nii_path):
     for i in range(13):
         surface.SetValue(i, i)
 
+
     # scalars = vtk.vtkFloatArray()
     # dims = reader.GetOutput().GetDimensions()
     # size = dims[0] * dims[1] * dims[2]
@@ -288,7 +289,48 @@ def viz_NII_3D_SR(nii_path):
     iren.Start()
 
 
+def viz_NII_3D_SR_v2(nii_path):
+    reader = vtk.vtkNIFTIImageReader()
+    reader.SetFileName(nii_path)
+    reader.Update()
+
+    surface = vtk.vtkContourFilter()  # 以等值面的形式进行面绘制
+    surface.SetInputConnection(reader.GetOutputPort())
+
+    surface.SetValue(0, 100)
+
+    surface_normals = vtk.vtkPolyDataNormals()
+    surface_normals.SetInputConnection(surface.GetOutputPort())
+    surface_normals.SetFeatureAngle(90)
+
+    surface_mapper = vtk.vtkPolyDataMapper()
+    surface_mapper.SetInputConnection(surface_normals.GetOutputPort())
+    surface_mapper.ScalarVisibilityOn()
+
+    actor = vtk.vtkActor()
+    actor.SetMapper(surface_mapper)
+
+    ren = vtk.vtkRenderer()
+    ren.AddActor(actor)
+    ren.SetBackground(.1, .2, .4)
+
+    renWin = vtk.vtkRenderWindow()
+    renWin.AddRenderer(ren)
+
+    iren = vtk.vtkRenderWindowInteractor()
+    iren.SetRenderWindow(renWin)
+    iren.SetInteractorStyle(MyEvent())
+    iren.Initialize()
+    renWin.SetSize(600, 600)
+
+    renWin.Render()
+
+    iren.Start()
+
+
 if __name__ == "__main__":
     # nii2dcm("../dataset/1.nii.gz", "../dataset/4/")
+    ct_nii_path = os.path.join(config.val_dataset_dir, "CT/img0004.nii.gz")
     nii_path = os.path.join(config.val_dataset_dir, "pred/organ0004.nii.gz")
-    viz_NII_3D_SR(nii_path)
+    # viz_NII_3D_SR(nii_path)
+    viz_NII_3D_SR_v2(ct_nii_path)
