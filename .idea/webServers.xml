@@ -10,7 +10,7 @@
         </fileTransfer>
       </webServer>
       <webServer id="3962f61a-2b08-485a-9d13-f9fe661cf29a" name="lab2">
-        <fileTransfer rootFolder="/home/gzy/abdominal-multi-organ-segmentation" accessType="SFTP" host="49.123.64.220" port="22" sshConfigId="bd20a49f-c1f7-4408-a922-ca552db12d8f" sshConfig="gzy@49.123.64.220:22 password">
+        <fileTransfer rootFolder="/home/gzy/abdominal-multi-organ-segmentation" accessType="SFTP" host="49.123.66.156" port="22" sshConfigId="bd20a49f-c1f7-4408-a922-ca552db12d8f" sshConfig="gzy@49.123.66.156:22 password">
           <advancedOptions>
             <advancedOptions controlEncoding="UTF-8" dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

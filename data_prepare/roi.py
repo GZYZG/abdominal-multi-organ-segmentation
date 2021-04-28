@@ -71,6 +71,7 @@ def normalize(X, norm='mean', axis=1):
     if axis == 0:
         X = X.T
 
+    X.astype(np.float32)
     return X
 
 
@@ -219,20 +220,20 @@ def get_start_end(nii_label):
 
 
 def Resampling(img, label=False, new_spacing=[1, 1, 1]):
-    original_size = img.GetSize() #获取图像原始尺寸
-    original_spacing = img.GetSpacing() #获取图像原始分辨率
-    new_spacing = new_spacing #设置图像新的分辨率为1*1*1
+    original_size = img.GetSize()  # 获取图像原始尺寸
+    original_spacing = img.GetSpacing()  # 获取图像原始分辨率
+    new_spacing = new_spacing  # 设置图像新的分辨率为1*1*1
 
     new_size = [int(round(original_size[0] * (original_spacing[0] /new_spacing[0]))),
                 int(round(original_size[1] * (original_spacing[1] / new_spacing[1]))),
-                int(round(original_size[2] * (original_spacing[2] / new_spacing[2])))] #计算图像在新的分辨率下尺寸大小
-    resampleSliceFilter = itk.ResampleImageFilter() #初始化
+                int(round(original_size[2] * (original_spacing[2] / new_spacing[2])))]  # 计算图像在新的分辨率下尺寸大小
+    resampleSliceFilter = itk.ResampleImageFilter()  # 初始化
     if label is False:
         Resampleimage = resampleSliceFilter.Execute(img, new_size, itk.Transform(), itk.sitkBSpline,
                                                 img.GetOrigin(), new_spacing, img.GetDirection(), 0,
                                                 img.GetPixelIDValue())
         # ResampleimageArray = itk.GetArrayFromImage(Resampleimage)
-        # ResampleimageArray[ResampleimageArray < 0] = 0 #将图中小于0的元素置为0
+        # ResampleimageArray[ResampleimageArray < 0] = 0  # 将图中小于0的元素置为0
     else:  # for label, should use sitk.sitkLinear to make sure the original and resampled label are the same!!!
         Resampleimage = resampleSliceFilter.Execute(img, new_size, itk.Transform(), itk.sitkLinear,
                                                     img.GetOrigin(), new_spacing, img.GetDirection(), 0,
@@ -312,6 +313,7 @@ if __name__ == "__main__":
     normalized = True
     resampled = False
     croped = True
+    chunked = True
     norm = "minmax"
 
     # for nii in train_dataset:
@@ -344,6 +346,13 @@ if __name__ == "__main__":
             ct_image = itk.ReadImage(ct)
             gt_image = itk.ReadImage(seg)
 
+            ct_spacing = ct_image.GetSpacing()
+            ct_origin = ct_image.GetOrigin()
+            ct_direction = ct_image.GetDirection()
+            gt_spacing = gt_image.GetSpacing()
+            gt_origin = gt_image.GetOrigin()
+            gt_direction = gt_image.GetDirection()
+
             if resampled:
                 # 将图像进行重采样，使得其满足图像的shape为(512,512)，slice的厚度为1
                 origin_spacing = np.array(ct_image.GetSpacing())
@@ -359,7 +368,7 @@ if __name__ == "__main__":
                 ct_resampled = ct_image
                 gt_resampled = gt_image
 
-            if croped:
+            if chunked:
                 # 将无分割目标的图像略去
                 start, end = get_start_end(itk.GetArrayFromImage(gt_resampled))
                 print(f"{nii} : resampled total={gt_resampled.GetSize()[-1]}, origin total={gt_image.GetSize()[-1]},"
@@ -387,9 +396,17 @@ if __name__ == "__main__":
                 prep_gt = gt_croped
                 prep_ct = ct_croped
 
+            prep_ct.SetSpacing(ct_spacing)
+            prep_ct.SetOrigin(ct_origin)
+            prep_ct.SetDirection(ct_direction)
+            prep_gt.SetOrigin(gt_origin)
+            prep_gt.SetOrigin(gt_origin)
+            prep_gt.SetDirection(gt_direction)
+
             itk.WriteImage(prep_ct, os.path.join(prep_dirs[idx], f"CT/{nii}"))
             itk.WriteImage(prep_gt, os.path.join(prep_dirs[idx], f"GT/{nii.replace('img', 'label')}"))
 
+            print(f"{nii} processed ...")
 
 
 

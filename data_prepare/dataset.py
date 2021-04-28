@@ -130,8 +130,8 @@ class SlicesDataset(IterableDataset):
                 yield ct_array, seg_array
 
 
-ct_dir = os.path.join(config.train_dataset_dir, "CT")  # '/home/gzy/medical/abdominal-multi-organ-segmentation/train/CT/'
-seg_dir = os.path.join(config.train_dataset_dir, "GT")  # '/home/gzy/medical/abdominal-multi-organ-segmentation/train/GT/'
+ct_dir = os.path.join(config.prep_train_dataset_dir, "CT")
+seg_dir = os.path.join(config.prep_train_dataset_dir, "GT")
 
 # train_ds = Dataset(ct_dir, seg_dir)
 train_ds = SlicesDataset(ct_dir, seg_dir, slice_num=config.slice_num)

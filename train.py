@@ -19,7 +19,7 @@ if __name__ == "__main__":
     # 定义超参数
     on_server = True
     device = config.device
-    print(f"{sys.argv[0]}\n\n")
+    # print(f"{sys.argv[0]}\n\n")
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(map(str,list(range(torch.cuda.device_count()))))  # '0'  # if on_server is False else '1,2,3'
     cudnn.benchmark = True
     Epoch = config.epoch
