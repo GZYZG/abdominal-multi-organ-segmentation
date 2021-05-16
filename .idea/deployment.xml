@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="gzy@49.123.64.220:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" showEqualInSync="true" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="gzy@49.123.73.58:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" showEqualInSync="true" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
     <serverData>
       <paths name="gzy@49.123.64.220:22 password">
         <serverdata>
@@ -12,10 +12,10 @@
           </excludedPaths>
         </serverdata>
       </paths>
-      <paths name="gzy@49.123.66.156:22 password">
+      <paths name="gzy@49.123.65.67:22 password">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/gzy/abdominal-multi-organ-segmentation" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
@@ -27,6 +27,13 @@
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/train" />
           </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="gzy@49.123.73.58:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/gzy/abdominal-multi-organ-segmentation" local="$PROJECT_DIR$" />
+          </mappings>
         </serverdata>
       </paths>
       <paths name="kdd">
@@ -62,11 +69,9 @@
           <mappings>
             <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
           </mappings>
-          <excludedPaths>
-            <excludedPath path="/dataset" />
-          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>

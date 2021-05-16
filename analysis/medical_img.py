@@ -236,7 +236,7 @@ def viz_NII_3D_SR(nii_path):
 
     smooth_filter = vtk.vtkSmoothPolyDataFilter()
     smooth_filter.SetInputConnection(surface.GetOutputPort())
-    smooth_filter.SetNumberOfIterations(200)
+    smooth_filter.SetNumberOfIterations(2000)
     smooth_filter.Update()
 
     surface_normals = vtk.vtkPolyDataNormals()
@@ -328,9 +328,19 @@ def viz_NII_3D_SR_v2(nii_path):
     iren.Start()
 
 
+def interpolate(slices):
+    """对slices在z轴上进行插值，减小slice间的spacing
+    要注意保持标签插值后的准确性
+
+    """
+
+    pass
+
+
 if __name__ == "__main__":
     # nii2dcm("../dataset/1.nii.gz", "../dataset/4/")
     ct_nii_path = os.path.join(config.val_dataset_dir, "CT/img0004.nii.gz")
     nii_path = os.path.join(config.val_dataset_dir, "pred/organ0004.nii.gz")
-    # viz_NII_3D_SR(nii_path)
-    viz_NII_3D_SR_v2(ct_nii_path)
+    label = os.path.join(config.val_dataset_dir, "GT/label0004.nii.gz")
+    viz_NII_3D_SR(label)
+    # viz_NII_3D_SR_v2(ct_nii_path)

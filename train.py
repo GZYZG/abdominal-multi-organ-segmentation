@@ -49,7 +49,7 @@ if __name__ == "__main__":
     lr_decay = torch.optim.lr_scheduler.MultiStepLR(opt, [900])
 
     if config.restore_training:
-        checkpoint = load_model(net, opt, lr_decay, config.checkpoint_path)
+        checkpoint = load_model(net, config.checkpoint_path, opt, lr_decay)
         net, opt, lr_decay, save_epoch = checkpoint['model'], checkpoint['optimizer'], checkpoint['lr_schedule'], \
                                           checkpoint['epoch']
         start_epoch = save_epoch + 1

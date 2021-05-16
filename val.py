@@ -19,15 +19,14 @@
 
 import os
 from time import time
-
 import torch
 import torch.nn.functional as F
-
 import numpy as np
 import SimpleITK as sitk
 import xlsxwriter as xw
 import scipy.ndimage as ndimage
 from collections import OrderedDict
+from utils.utils import load_model
 
 from net.ResUnet_dice import Net
 from config.config import config
@@ -104,11 +103,11 @@ net.to(config.device)
 if config.on_gpu:
     net = torch.nn.DataParallel(net).cuda(0)
 # net = torch.nn.DataParallel(Net(training=False)).cuda()
-state_dict = torch.load(module_dir, map_location=config.device)
-state_dict = OrderedDict([(k.replace('module.', ''), v) for k, v in state_dict.items()])
+state_dict = torch.load(module_dir, map_location=config.device)['model_state_dict']
+# state_dict = OrderedDict([(k.replace('module.', ''), v) for k, v in state_dict.items()])
 net.load_state_dict(state_dict)
 net.eval()
-
+print(f"Testing/Validating model is loaded from {module_dir} ")
 
 # 开始正式进行测试
 for file_index, file in enumerate(os.listdir(val_ct_dir)):

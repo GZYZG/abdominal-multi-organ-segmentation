@@ -16,14 +16,26 @@ def save_model(epoch, model, optimizer, loss_func, lr_schedule, path):
         return False
 
 
-def load_model(model, optimizer, lr_schedule, path):
+def load_model(model, path, optimizer=None, lr_schedule=None):
+    """从checkpoint文件加载模型
+
+    Parameters
+    ----------
+    model : nn.Module, 创建好的未加载参数的模型
+    optimizer : 优化器，可选的
+    lr_schedule : 学习率scheduler，可选的
+    path : str, checkpoint文件的路径
+    """
     try:
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if optimizer is not None:
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
         epoch = checkpoint['epoch']
         # loss = checkpoint['loss']
-        lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+        if lr_schedule is not None:
+            lr_schedule.load_state_dict(checkpoint['lr_schedule'])
 
         return dict(zip(["model", "optimizer", "lr_schedule", "epoch"], [model, optimizer, lr_schedule, epoch]))
     except Exception as exp:
