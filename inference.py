@@ -33,11 +33,12 @@ from config.config import config
 
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+dataset_dir = config.prep_val_dataset_dir
 
-val_ct_dir = os.path.join(config.val_dataset_dir, "CT")  # './val/CT/'
-val_seg_dir = os.path.join(config.val_dataset_dir, "GT")  # './val/GT/'
+test_ct_dir = os.path.join(dataset_dir, "CT")  # './val/CT/'
+# val_seg_dir = os.path.join(config.val_dataset_dir, "GT")  # './val/GT/'
 
-organ_pred_dir = os.path.join(config.val_dataset_dir, "pred")  # './val/pred/'
+organ_pred_dir = os.path.join(dataset_dir, "pred")  # './val/pred/'
 if not os.path.exists(organ_pred_dir):
     os.mkdir(organ_pred_dir)
 
@@ -66,37 +67,6 @@ organ_list = [
     'left adrenal gland',
 ]
 
-# 创建一个表格对象，并添加一个sheet，后期配合window的excel来出图
-workbook = xw.Workbook('./result.xlsx')
-worksheet = workbook.add_worksheet('result')
-
-# 设置单元格格式
-bold = workbook.add_format()
-bold.set_bold()
-
-center = workbook.add_format()
-center.set_align('center')
-
-center_bold = workbook.add_format()
-center_bold.set_bold()
-center_bold.set_align('center')
-
-worksheet.set_column(1, len(os.listdir(val_ct_dir)), width=15)
-worksheet.set_column(0, 0, width=30, cell_format=center_bold)
-worksheet.set_row(0, 20, center_bold)
-
-# 写入文件名称
-worksheet.write(0, 0, 'file name')
-for index, file_name in enumerate(os.listdir(val_ct_dir), start=1):
-    worksheet.write(0, index, file_name)
-
-# 写入各项评价指标名称
-for index, organ_name in enumerate(organ_list, start=1):
-    worksheet.write(index, 0, organ_name)
-worksheet.write(14, 0, 'speed')
-worksheet.write(15, 0, 'shape')
-
-
 # 定义网络并加载参数
 net = Net(training=False)
 net.to(config.device)
@@ -110,12 +80,11 @@ net.eval()
 print(f"Testing model is loaded from {module_dir} ")
 
 # 开始正式进行测试
-for file_index, file in enumerate(os.listdir(val_ct_dir)):
-
+for file_index, file in enumerate(os.listdir(test_ct_dir)):
     start_time = time()
 
     # 将CT读入内存
-    ct = sitk.ReadImage(os.path.join(val_ct_dir, file), sitk.sitkInt16)
+    ct = sitk.ReadImage(os.path.join(test_ct_dir, file), sitk.sitkInt16)
     ct_array = sitk.GetArrayFromImage(ct)
 
     # 将灰度值在阈值之外的截断掉
@@ -166,36 +135,20 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
         pred_seg = np.concatenate([pred_seg, outputs_list[-1][:, -count:, :, :]], axis=1)
 
     # 将金标准读入内存来计算dice系数
-    seg = sitk.ReadImage(os.path.join(val_seg_dir, file.replace('img', 'label')), sitk.sitkUInt8)
-    seg_array = sitk.GetArrayFromImage(seg)
+    # seg = sitk.ReadImage(os.path.join(val_seg_dir, file.replace('img', 'label')), sitk.sitkUInt8)
+    # seg_array = sitk.GetArrayFromImage(seg)
 
     # 使用线性插值将预测的分割结果缩放到原始nii大小
-    pred_seg = torch.FloatTensor(pred_seg).unsqueeze(dim=0)
-    pred_seg = F.upsample(pred_seg, seg_array.shape, mode='trilinear').squeeze().detach().numpy()
+    # pred_seg = torch.FloatTensor(pred_seg).unsqueeze(dim=0)
+    # pred_seg = F.upsample(pred_seg, seg_array.shape, mode='trilinear').squeeze().detach().numpy()
     pred_seg = np.argmax(pred_seg, axis=0)
     pred_seg = np.round(pred_seg).astype(np.uint8)
 
     print('size of pred: ', pred_seg.shape)
-    print('size of GT: ', seg_array.shape)
+    # print('size of GT: ', seg_array.shape)
 
-    worksheet.write(15, file_index + 1, pred_seg.shape[0])
 
-    # 计算每一种器官的dice系数，并将结果写入表格中存储
-    for organ_index, organ in enumerate(organ_list, start=1):
 
-        pred_organ = np.zeros(pred_seg.shape)
-        target_organ = np.zeros(seg_array.shape)
-
-        pred_organ[pred_seg == organ_index] = 1
-        target_organ[seg_array == organ_index] = 1
-
-        # 如果该例数据中不存在某一种器官，在表格中记录 None 跳过即可
-        if target_organ.sum() == 0:
-            worksheet.write(organ_index, file_index + 1, 'None')
-
-        else:
-            dice = (2 * pred_organ * target_organ).sum() / (pred_organ.sum() + target_organ.sum())
-            worksheet.write(organ_index, file_index + 1, dice)
 
     # 将预测的结果保存为nii数据
     pred_seg = sitk.GetImageFromArray(pred_seg)
@@ -204,16 +157,10 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
     pred_seg.SetOrigin(ct.GetOrigin())
     pred_seg.SetSpacing(ct.GetSpacing())
 
-    sitk.WriteImage(pred_seg, os.path.join(organ_pred_dir, file.replace('img', 'organ')))
+    sitk.WriteImage(pred_seg, os.path.join(organ_pred_dir, file))
     del pred_seg
 
     speed = time() - start_time
 
-    worksheet.write(14, file_index + 1, speed)
-
-    print('this case use {:.3f} s'.format(speed))
+    print('{} inference finished, this case use {:.3f} s'.format(file, speed))
     print('-----------------------')
-
-
-# 最后安全关闭表格
-workbook.close()
