@@ -33,7 +33,7 @@ prep_val_dataset_dir = os.path.join(dataset_dir, "prep_val")
 prep_test_dataset_dir = os.path.join(dataset_dir, "prep_test")
 
 checkpoint_model_name = "net426-1.698-0.725-512x512.pth"
-test_model_name = "net538-0.794-1.267-512x512.pth"
+test_model_name = "net435-0.797-1.272-512x512.pth"
 
 parser.add_argument("--project_root", type=str, default=proj_root, help="Root path of current project")
 parser.add_argument("--dataset_dir", type=str, default=dataset_dir, help="Dataset dir path")

@@ -144,6 +144,12 @@ def test_elastic_deformation():
     cv2.waitKey()
 
 
+def fill_hole(image):
+    ret = ndimage.binary_fill_holes(image).astype(np.int8)
+
+    return ret
+
+
 if __name__ == "__main__":
     # test_elastic_deformation()
     X = misc.ascent()  # np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])

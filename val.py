@@ -41,7 +41,7 @@ organ_pred_dir = os.path.join(config.val_dataset_dir, "pred")  # './val/pred/'
 if not os.path.exists(organ_pred_dir):
     os.mkdir(organ_pred_dir)
 
-module_dir = config.test_model_path# 'output/module/net2480-0.718-0.812.pth'  # './module/net170-0.943-1.055.pth'
+module_dir = config.test_model_path
 
 upper = 350
 lower = -upper
