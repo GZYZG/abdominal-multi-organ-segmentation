@@ -30,6 +30,7 @@ from utils.utils import load_model
 
 from net.ResUnet_dice import Net
 from config.config import config
+from config.constants import VISIBLES
 
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -146,9 +147,6 @@ for file_index, file in enumerate(os.listdir(test_ct_dir)):
 
     print('size of pred: ', pred_seg.shape)
     # print('size of GT: ', seg_array.shape)
-
-
-
 
     # 将预测的结果保存为nii数据
     pred_seg = sitk.GetImageFromArray(pred_seg)

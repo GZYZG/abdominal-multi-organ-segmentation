@@ -15,8 +15,8 @@ ct_path = os.path.join(config.train_dataset_dir, "CT")  # '/home/zcy/Desktop/dat
 seg_path = os.path.join(config.train_dataset_dir, "GT")  # '/home/zcy/Desktop/dataset/multi-organ/test/GT'
 
 # 定于阈值
-upper = 350
-lower = -350
+upper = 1000
+lower = -upper
 
 num_point = 0.0  # 属于器官的体素数量
 num_inlier = 0.0  # 器官体素中灰度值位于阈值之内的体素数量

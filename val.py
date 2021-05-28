@@ -30,7 +30,8 @@ from utils.utils import load_model
 
 from net.ResUnet_dice import Net
 from config.config import config
-
+from config.constants import VISIBLES
+from utils.utils import calculate_metric_percase
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -49,7 +50,6 @@ down_scale = 0.5
 size = config.slice_num
 slice_thickness = 3
 
-
 organ_list = [
     'spleen',
     'right kidney',
@@ -65,6 +65,13 @@ organ_list = [
     'right adrenal gland',
     'left adrenal gland',
 ]
+
+# 选择对应的器官列表
+visible_list = VISIBLES[1]
+if visible_list is None:
+    visible_list = list(range(1, 14))
+
+visible_organ_list = [organ_list[i] for i in visible_list]
 
 # 创建一个表格对象，并添加一个sheet，后期配合window的excel来出图
 workbook = xw.Workbook('./result.xlsx')
@@ -91,11 +98,13 @@ for index, file_name in enumerate(os.listdir(val_ct_dir), start=1):
     worksheet.write(0, index, file_name)
 
 # 写入各项评价指标名称
-for index, organ_name in enumerate(organ_list, start=1):
+for index, organ_name in enumerate(visible_organ_list, start=1):
     worksheet.write(index, 0, organ_name)
-worksheet.write(14, 0, 'speed')
-worksheet.write(15, 0, 'shape')
 
+speed_idx = len(visible_list) + 1
+shape_idx = len(visible_list) + 2
+worksheet.write(speed_idx, 0, 'speed')
+worksheet.write(shape_idx, 0, 'shape')
 
 # 定义网络并加载参数
 net = Net(training=False)
@@ -146,8 +155,7 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
     outputs_list = []
     with torch.no_grad():
         for ct_array in ct_array_list:
-
-            ct_tensor = torch.FloatTensor(ct_array).to(config.device)  #.cuda()
+            ct_tensor = torch.FloatTensor(ct_array).to(config.device)  # .cuda()
             ct_tensor = ct_tensor.unsqueeze(dim=0)
             ct_tensor = ct_tensor.unsqueeze(dim=0)
 
@@ -169,6 +177,12 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
     seg = sitk.ReadImage(os.path.join(val_seg_dir, file.replace('img', 'label')), sitk.sitkUInt8)
     seg_array = sitk.GetArrayFromImage(seg)
 
+    # 将原分割数据中的标签进行替换
+    # _seg_array = np.zeros_like(seg_array)
+    # for idx, cls in enumerate(visible_list, start=1):
+    #     _seg_array[seg_array == cls] = idx
+    # seg_array = _seg_array
+
     # 使用线性插值将预测的分割结果缩放到原始nii大小
     pred_seg = torch.FloatTensor(pred_seg).unsqueeze(dim=0)
     pred_seg = F.upsample(pred_seg, seg_array.shape, mode='trilinear').squeeze().detach().numpy()
@@ -178,11 +192,10 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
     print('size of pred: ', pred_seg.shape)
     print('size of GT: ', seg_array.shape)
 
-    worksheet.write(15, file_index + 1, pred_seg.shape[0])
+    worksheet.write(shape_idx, file_index + 1, pred_seg.shape[0])
 
     # 计算每一种器官的dice系数，并将结果写入表格中存储
-    for organ_index, organ in enumerate(organ_list, start=1):
-
+    for organ_index, organ in enumerate(visible_organ_list, start=1):
         pred_organ = np.zeros(pred_seg.shape)
         target_organ = np.zeros(seg_array.shape)
 
@@ -194,7 +207,8 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
             worksheet.write(organ_index, file_index + 1, 'None')
 
         else:
-            dice = (2 * pred_organ * target_organ).sum() / (pred_organ.sum() + target_organ.sum())
+            # dice = (2 * pred_organ * target_organ).sum() / (pred_organ.sum() + target_organ.sum())
+            dice, hd95 = calculate_metric_percase(pred_organ, target_organ)
             worksheet.write(organ_index, file_index + 1, dice)
 
     # 将预测的结果保存为nii数据
@@ -209,11 +223,10 @@ for file_index, file in enumerate(os.listdir(val_ct_dir)):
 
     speed = time() - start_time
 
-    worksheet.write(14, file_index + 1, speed)
+    worksheet.write(len(visible_organ_list) + 1, file_index + 1, speed)
 
     print('this case use {:.3f} s'.format(speed))
     print('-----------------------')
-
 
 # 最后安全关闭表格
 workbook.close()

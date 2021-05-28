@@ -32,8 +32,9 @@ prep_train_dataset_dir = os.path.join(dataset_dir, "prep_train")
 prep_val_dataset_dir = os.path.join(dataset_dir, "prep_val")
 prep_test_dataset_dir = os.path.join(dataset_dir, "prep_test")
 
-checkpoint_model_name = "net426-1.698-0.725-512x512.pth"
+checkpoint_model_name = "net84-1.716-0.836-512x512.pth"
 test_model_name = "net435-0.797-1.272-512x512.pth"
+parser.add_argument('--checkpoint_model_name', type=str, default=checkpoint_model_name)
 
 parser.add_argument("--project_root", type=str, default=proj_root, help="Root path of current project")
 parser.add_argument("--dataset_dir", type=str, default=dataset_dir, help="Dataset dir path")
@@ -53,6 +54,8 @@ parser.add_argument("--test_model_path", type=str, default=os.path.join(model_di
 # arguments about model's in/out put
 width = 512
 height = 512
+dataset = "Synapse"
+parser.add_argument('--dataset', type=str, default=dataset, help='Used dataset')
 parser.add_argument('--CT_width', type=int, default=width, help='Width of CT slices')
 parser.add_argument('--CT_height', type=int, default=height, help='Height of CT slices')
 parser.add_argument('--slice_num', type=int, default=32, help='Selected num of slices in a CT')
