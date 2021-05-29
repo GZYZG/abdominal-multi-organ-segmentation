@@ -8,16 +8,11 @@ import scipy.ndimage as ndimage
 import numpy as np
 import SimpleITK as sitk
 import torch
+from skimage.transform import resize
 from torch.utils.data import Dataset as dataset
 from torch.utils.data import IterableDataset
 from config.config import config
 from utils.utils import split_ct_to_slice_batch
-
-on_server = True
-size = config.slice_num
-slice_thickness = 3
-down_scale = 1
-
 
 class MaskedSynapseDataset(IterableDataset):
     def __init__(self, ct_dir, seg_dir, slice_num, img_size=512, visible_class=None, transform=None):
@@ -31,7 +26,7 @@ class MaskedSynapseDataset(IterableDataset):
         self.visible = visible_class if not visible_class else sorted(visible_class)
 
         self.transform = transform
-        self.img_size = img_size
+        self.img_size = img_size  # 输入模型的图像的尺寸
 
     def __iter__(self):
         """
@@ -56,9 +51,10 @@ class MaskedSynapseDataset(IterableDataset):
                         _seg[seg_array == cls] = idx + 1
                     seg_array = _seg
 
-                w, h = ct_array.shape[-2:]
-                ct_array = ndimage.zoom(ct_array, (1, w / self.img_size, h / self.img_size), order=3)
-                seg_array = ndimage.zoom(seg_array, (1, w / self.img_size, h / self.img_size), order=0)
+                # w, h = ct_array.shape[-2:]
+                output_shape = [ct_array.shape[0], self.img_size, self.img_size]
+                ct_array = resize(ct_array, output_shape, order=3)  # ndimage.zoom(ct_array, (1, w / self.img_size, h / self.img_size), order=3)
+                seg_array = resize(seg_array, output_shape, order=0)  # ndimage.zoom(seg_array, (1, w / self.img_size, h / self.img_size), order=0)
 
                 if self.transform:
                     ct_array = self.transform(ct_array)
@@ -73,8 +69,9 @@ class MaskedSynapseDataset(IterableDataset):
 # # 测试代码
 if __name__ == "__main__":
     from torch.utils.data import DataLoader
-    ct_dir = os.path.join(config.prep_train_dataset_dir, "CT")
-    seg_dir = os.path.join(config.prep_train_dataset_dir, "GT")
+    dataset_dir = os.path.join(config.datasets_dir, config.dataset)
+    ct_dir = os.path.join(dataset_dir, "prep_train/CT")
+    seg_dir = os.path.join(dataset_dir, "prep_train/GT")
 
     train_ds = MaskedSynapseDataset(ct_dir, seg_dir, slice_num=config.slice_num, visible_class=[1, 2, 3, 4])
     train_dl = DataLoader(train_ds, 1)

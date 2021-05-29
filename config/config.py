@@ -13,7 +13,7 @@ parser.add_argument('--batch_size', type=int, default=2, help='batch size while 
 parser.add_argument('--epoch', type=int, default=2000, help="epochs to train")
 parser.add_argument('--num_workers', type=int, default=3, help='Num of workers to load data')
 parser.add_argument('--on_gpu', type=bool, default=use_gpu, help='Run on GPU or not')
-parser.add_argument('--restore_training', type=bool, default=True, help="Restore training or not")
+parser.add_argument('--restore_training', type=bool, default=False, help="Restore training or not")
 
 # arguments about path info
 # proj_root = "/home/gzy/medical/abdominal-multi-organ-segmentation/"
@@ -22,30 +22,34 @@ basename = os.path.basename(__file__)
 proj_root = proj_root.replace(basename[:-3], '')
 print(proj_root)
 # model_dir = os.path.join(proj_root, "module")
-dataset_dir = os.path.join(proj_root, "dataset")
-train_dataset_dir = os.path.join(dataset_dir, "train")
-val_dataset_dir = os.path.join(dataset_dir, "val")
-test_dataset_dir = os.path.join(dataset_dir, "test")
+datasets_dir = os.path.join(proj_root, "dataset")
+
+# train_dataset_dir = os.path.join(dataset_dir, "train")
+# val_dataset_dir = os.path.join(dataset_dir, "val")
+# test_dataset_dir = os.path.join(dataset_dir, "test")
+# prep_train_dataset_dir = os.path.join(dataset_dir, "prep_train")
+# prep_val_dataset_dir = os.path.join(dataset_dir, "prep_val")
+# prep_test_dataset_dir = os.path.join(dataset_dir, "prep_test")
+
 output_dir = os.path.join(proj_root, "output")
 model_dir = os.path.join(output_dir, "module")
-prep_train_dataset_dir = os.path.join(dataset_dir, "prep_train")
-prep_val_dataset_dir = os.path.join(dataset_dir, "prep_val")
-prep_test_dataset_dir = os.path.join(dataset_dir, "prep_test")
 
 checkpoint_model_name = "net84-1.716-0.836-512x512.pth"
 test_model_name = "net435-0.797-1.272-512x512.pth"
 parser.add_argument('--checkpoint_model_name', type=str, default=checkpoint_model_name)
 
 parser.add_argument("--project_root", type=str, default=proj_root, help="Root path of current project")
-parser.add_argument("--dataset_dir", type=str, default=dataset_dir, help="Dataset dir path")
+parser.add_argument("--datasets_dir", type=str, default=datasets_dir, help="Dataset dir path")
 parser.add_argument("--model_dir", type=str, default=model_dir, help="Directory where models will be dumped/loaded")
-parser.add_argument("--train_dataset_dir", type=str, default=train_dataset_dir, help="Train dataset dir")
-parser.add_argument("--val_dataset_dir", type=str, default=val_dataset_dir, help="Val dataset dir")
-parser.add_argument("--test_dataset_dir", type=str, default=test_dataset_dir, help="Test Dataset dir")
+
+# parser.add_argument("--train_dataset_dir", type=str, default=train_dataset_dir, help="Train dataset dir")
+# parser.add_argument("--val_dataset_dir", type=str, default=val_dataset_dir, help="Val dataset dir")
+# parser.add_argument("--test_dataset_dir", type=str, default=test_dataset_dir, help="Test Dataset dir")
+# parser.add_argument("--prep_train_dataset_dir", type=str, default=prep_train_dataset_dir, help="Preprocessed train dataset")
+# parser.add_argument("--prep_val_dataset_dir", type=str, default=prep_val_dataset_dir, help="Preprocessed val dataset")
+# parser.add_argument("--prep_test_dataset_dir", type=str, default=prep_test_dataset_dir, help="Preprocessed test dataset")
+
 parser.add_argument("--output_dir", type=str, default=output_dir, help="Output dir")
-parser.add_argument("--prep_train_dataset_dir", type=str, default=prep_train_dataset_dir, help="Preprocessed train dataset")
-parser.add_argument("--prep_val_dataset_dir", type=str, default=prep_val_dataset_dir, help="Preprocessed val dataset")
-parser.add_argument("--prep_test_dataset_dir", type=str, default=prep_test_dataset_dir, help="Preprocessed test dataset")
 parser.add_argument('--checkpoint_path', type=str, default=os.path.join(model_dir, checkpoint_model_name),
                     help="Checkpoint file path")
 parser.add_argument("--test_model_path", type=str, default=os.path.join(model_dir, test_model_name),

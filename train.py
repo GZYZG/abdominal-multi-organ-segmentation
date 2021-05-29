@@ -21,6 +21,7 @@ from config.constants import *
 
 
 if __name__ == "__main__":
+    # 确定输出的目录名
     output_dir = get_output_dirname(args=config)
     dirs = os.listdir(config.output_dir)
     dirs = list(filter(lambda x: os.path.isdir(x), dirs))
@@ -61,11 +62,12 @@ if __name__ == "__main__":
 
     # 定义数据加载
     shuffle = False
-    ct_dir = os.path.join(config.prep_train_dataset_dir, "CT")
-    seg_dir = os.path.join(config.prep_train_dataset_dir, "GT")
+    dataset_dir = os.path.join(config.datasets_dir, config.dataset)
+    ct_dir = os.path.join(dataset_dir, "prep_train/CT")
+    seg_dir = os.path.join(dataset_dir, "prep_train/GT")
 
     train_ds = MaskedSynapseDataset(ct_dir, seg_dir, slice_num=config.slice_num, img_size=config.CT_width,
-                                    visible_class=VISIBLES[0], transform=transforms.Compose())
+                                    visible_class=VISIBLES[0], transform=transforms.Compose([]))
 
     train_dl = DataLoader(train_ds, batch_size, shuffle, num_workers=num_workers, pin_memory=pin_memory)
 
@@ -102,9 +104,10 @@ if __name__ == "__main__":
 
         for step, (ct, seg) in enumerate(train_dl):
             ct = ct.to(device)  # .cuda()
+            seg = seg.to(device)
             outputs_stage1, outputs_stage2 = net(ct)
             loss = .5 * dice_loss(outputs_stage1, outputs_stage2, seg) +\
-                   .5 * ce_loss(outputs_stage1, outputs_stage2, seg)
+                   .5 * ce_loss(outputs_stage1, outputs_stage2, seg.long())
 
             mean_loss.append(loss.item())
 

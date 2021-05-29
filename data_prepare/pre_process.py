@@ -5,6 +5,7 @@ import os
 import pandas as pd
 from sklearn import preprocessing
 import numpy as np
+from skimage.transform import rescale as Rescale
 import matplotlib.pyplot as plt
 """
 - 归一化：
@@ -250,8 +251,13 @@ def resampling(img, label=False, new_spacing=[1, 1, 1]):
                                                     img.GetOrigin(), new_spacing, img.GetDirection(), 0,
                                                     img.GetPixelIDValue())
 
-
     return resampleimage
+
+
+def rescale(img, scale, order):
+    ret = Rescale(img, scale, order)
+
+    return ret
 
 
 def _test(imgs):
@@ -386,9 +392,10 @@ def preprocessed_train_val():
     win_level = 50
     win_width = 600
     window = False
+    dataset_dir = os.path.join(config.datasets_dir, config.dataset)
 
-    raw_dirs = [config.train_dataset_dir, config.val_dataset_dir]
-    prep_dirs = [config.prep_train_dataset_dir, config.prep_val_dataset_dir]
+    raw_dirs = [os.path.join(dataset_dir, "train"), os.path.join(dataset_dir, "val")]
+    prep_dirs = [os.path.join(dataset_dir, "prep_train"), os.path.join(dataset_dir, "prep_val")]
 
     # 处理CT数据
     for idx, dir in enumerate(raw_dirs):
