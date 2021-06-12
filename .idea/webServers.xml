@@ -2,13 +2,6 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="19bb330b-b3bc-498f-8b3c-636b8b7c358f" name="gzy@49.123.67.105:22" url="http:///">
-        <fileTransfer rootFolder="/home/gzy/medical/abdominal-multi-organ-segmentation" accessType="SFTP" host="49.123.67.105" port="22" sshConfigId="9469916b-c1b1-4540-abfb-398008070b16" sshConfig="gzy@49.123.67.105:22 password">
-          <advancedOptions>
-            <advancedOptions controlEncoding="UTF-8" />
-          </advancedOptions>
-        </fileTransfer>
-      </webServer>
       <webServer id="3962f61a-2b08-485a-9d13-f9fe661cf29a" name="lab2">
         <fileTransfer rootFolder="/home/gzy/abdominal-multi-organ-segmentation" accessType="SFTP" host="49.123.81.112" port="22" sshConfigId="bd20a49f-c1f7-4408-a922-ca552db12d8f" sshConfig="gzy@49.123.81.112:22 password">
           <advancedOptions>

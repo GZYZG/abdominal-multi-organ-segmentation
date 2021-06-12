@@ -13,7 +13,7 @@ parser.add_argument('--batch_size', type=int, default=2, help='batch size while 
 parser.add_argument('--epoch', type=int, default=2000, help="epochs to train")
 parser.add_argument('--num_workers', type=int, default=3, help='Num of workers to load data')
 parser.add_argument('--on_gpu', type=bool, default=use_gpu, help='Run on GPU or not')
-parser.add_argument('--restore_training', type=bool, default=False, help="Restore training or not")
+parser.add_argument('--restore_training', type=bool, default=True, help="Restore training or not")
 
 # arguments about path info
 # proj_root = "/home/gzy/medical/abdominal-multi-organ-segmentation/"
@@ -34,7 +34,7 @@ datasets_dir = os.path.join(proj_root, "dataset")
 output_dir = os.path.join(proj_root, "output")
 model_dir = os.path.join(output_dir, "module")
 
-checkpoint_model_name = "net84-1.716-0.836-512x512.pth"
+checkpoint_model_name = "net22-2.757-2.752-512x512.pth"
 test_model_name = "net435-0.797-1.272-512x512.pth"
 parser.add_argument('--checkpoint_model_name', type=str, default=checkpoint_model_name)
 

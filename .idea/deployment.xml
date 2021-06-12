@@ -1,24 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="gzy@49.123.73.58:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" showEqualInSync="true" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
+  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false" showEqualInSync="true" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
     <serverData>
-      <paths name="gzy@49.123.64.220:22 password">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/" local="$PROJECT_DIR$" />
-          </mappings>
-          <excludedPaths>
-            <excludedPath path="/dataset" />
-          </excludedPaths>
-        </serverdata>
-      </paths>
-      <paths name="gzy@49.123.65.67:22 password">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/home/gzy/abdominal-multi-organ-segmentation" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
       <paths name="gzy@49.123.67.105:22">
         <serverdata>
           <mappings>
@@ -26,41 +9,14 @@
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/train" />
+            <excludedPath path="/dataset" />
           </excludedPaths>
         </serverdata>
       </paths>
-      <paths name="gzy@49.123.73.58:22 password">
+      <paths name="gzy@49.123.81.112:22 password">
         <serverdata>
           <mappings>
             <mapping deploy="/home/gzy/abdominal-multi-organ-segmentation" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="kdd">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="kdd (1)">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="kdd (2)">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="lab (1)">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

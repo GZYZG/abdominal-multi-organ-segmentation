@@ -21,15 +21,16 @@
 import torch
 import torch.nn as nn
 
-num_organ = 13
+# num_organ = 13
 
 # 每一种器官的权重，权重的把握原则就是，比较容易分割的器官的权重保持为１不变，分割效果不好的器官的权重要大一些
 organ_weight = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 
 class DiceLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, num_organs):
         super().__init__()
+        self.num_organs = num_organs
 
     def forward(self, pred_stage1, pred_stage2, target):
         """
@@ -38,7 +39,7 @@ class DiceLoss(nn.Module):
         :param target: (B, 48, 256, 256)
         :return: Dice距离
         """
-
+        num_organ = self.num_organs
         # 首先将金标准拆开
         organ_target = torch.zeros((target.size(0), num_organ, 48, 256, 256))
 

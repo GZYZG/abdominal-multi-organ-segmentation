@@ -9,9 +9,9 @@ ResUNet整体上网络结构基于VNet，做出的修改如下：
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from config.config import config
 dropout_rate = 0.3
-num_organ = 13
+# num_organ = 13
 
 
 # 定义单个3D FCN
@@ -19,7 +19,7 @@ class ResUNet(nn.Module):
     """
     共9332094个可训练的参数, 九百三十万左右
     """
-    def __init__(self, training, inchannel, stage):
+    def __init__(self, training, inchannel, stage, num_organs):
         """
         :param training: 标志网络是属于训练阶段还是测试阶段
         :param inchannel 网络最开始的输入通道数量
@@ -29,6 +29,7 @@ class ResUNet(nn.Module):
 
         self.training = training
         self.stage = stage
+        self.num_organs = num_organs
 
         self.encoder_stage1 = nn.Sequential(
             nn.Conv3d(inchannel, 16, 3, 1, padding=1),
@@ -135,10 +136,9 @@ class ResUNet(nn.Module):
             nn.PReLU(32)
         )
 
-        self.map = nn.Conv3d(32, num_organ + 1, 1)
+        self.map = nn.Conv3d(32, num_organs + 1, 1)
 
     def forward(self, inputs):
-
         if self.stage is 'stage1':
             long_range1 = self.encoder_stage1(inputs) + inputs
         else:
@@ -186,13 +186,13 @@ class ResUNet(nn.Module):
 
 # 定义最终的级连3D FCN
 class Net(nn.Module):
-    def __init__(self, training):
+    def __init__(self, training, num_organs):
         super().__init__()
 
         self.training = training
-
-        self.stage1 = ResUNet(training=training, inchannel=1, stage='stage1')
-        self.stage2 = ResUNet(training=training, inchannel=num_organ + 2, stage='stage2')
+        self.num_organs = num_organs
+        self.stage1 = ResUNet(training=training, inchannel=1, stage='stage1', num_organs=num_organs)
+        self.stage2 = ResUNet(training=training, inchannel=num_organs + 2, stage='stage2', num_organs=num_organs)
 
     def forward(self, inputs):
         """
@@ -203,11 +203,11 @@ class Net(nn.Module):
         共18656348个可训练的参数，一千八百万左右
         """
         # 首先将输入缩小一倍
-        inputs_stage1 = F.upsample(inputs, (48, 128, 128), mode='trilinear')
+        inputs_stage1 = F.upsample(inputs, (config.slice_num, 256, 256), mode='trilinear')
 
         # 得到第一阶段的结果
         output_stage1 = self.stage1(inputs_stage1)
-        output_stage1 = F.upsample(output_stage1, (48, 256, 256), mode='trilinear')
+        output_stage1 = F.upsample(output_stage1, (config.slice_num, 512, 512), mode='trilinear')
 
         temp = F.softmax(output_stage1, dim=1)
 
@@ -222,16 +222,6 @@ class Net(nn.Module):
         else:
             return output_stage2
 
-
-# 网络参数初始化函数
-def init(module):
-    if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d):
-        nn.init.kaiming_normal(module.weight.data, 0.25)
-        nn.init.constant(module.bias.data, 0)
-
-
-net = Net(training=True)
-net.apply(init)
 
 # # 输出数据维度检查
 # net = net.cuda()
@@ -259,3 +249,12 @@ net.apply(init)
 #
 #
 # print(num_parameter)
+
+if __name__ == "__main__":
+    import os
+    from config.config import config
+    from utils.utils import vis_model
+    net = Net(training=True, num_organs=13)
+    net.to("cpu")
+    data = torch.randn((2, 1, 32, 512, 512)).to("cpu")
+    vis_model(net, data, os.path.join(config.output_dir, "Net.onnx"))

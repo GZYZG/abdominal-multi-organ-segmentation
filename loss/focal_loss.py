@@ -8,17 +8,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-num_organ = 13
-
 
 class CELoss(nn.Module):
-    def __init__(self, alpha=2):
+    def __init__(self, num_organs, alpha=2):
         """
 
         :param alpha: focal loss中的指数项的次数
         """
         super().__init__()
-
+        self.num_organs = num_organs
         self.alpha = alpha
         self.loss = nn.CrossEntropyLoss(reduce=False)
 

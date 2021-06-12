@@ -7,12 +7,13 @@ import torch
 import torch.nn as nn
 from config.config import config
 
-num_organ = 13
+# num_organ = 13
 
 
 class DiceLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, num_organs):
         super().__init__()
+        self.num_organs = num_organs
 
     def forward(self, pred_stage1, pred_stage2, target):
         """
@@ -21,7 +22,7 @@ class DiceLoss(nn.Module):
         :param target: (B, 48, 256, 256)
         :return: Dice距离
         """
-
+        num_organ = self.num_organs
         # 首先将金标准拆开
         organ_target = torch.zeros((target.size(0), num_organ + 1, config.slice_num, config.CT_width, config.CT_width))
         organ_target = organ_target.to(target.device)

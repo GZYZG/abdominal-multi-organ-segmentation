@@ -2,6 +2,9 @@ import torch
 import SimpleITK as sitk
 import numpy as np
 from medpy import metric
+import torch.nn as nn
+import torch.onnx
+import netron
 
 
 def save_model(epoch, model, optimizer, lr_schedule, path):
@@ -123,3 +126,17 @@ def calculate_metric_hd95(pred, gt):
         return hd95
     else:
         return 0, 0
+
+
+def init(module):
+    """网络参数初始化函数"""
+    if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d):
+        nn.init.kaiming_normal(module.weight.data, 0.25)
+        nn.init.constant(module.bias.data, 0)
+
+
+def vis_model(model, data, onnx_path):
+    out = model(data)
+
+    torch.onnx.export(model, data, onnx_path)
+    netron.start(onnx_path)

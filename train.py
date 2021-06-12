@@ -9,7 +9,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from config.config import config
-from net.ResUnet_dice import net
+from net.ResUnet_dice import Net
 # from loss.ava_Dice_loss import DiceLoss
 from loss.ce_loss import CELoss
 from loss.ava_Dice_loss_with_bg import DiceLoss
@@ -29,6 +29,7 @@ if __name__ == "__main__":
         output_dir = f"{output_dir}_{dirs.count(output_dir)}"
 
     visible_class = VISIBLES[1]
+    num_organs = 13 if visible_class is None else len(visible_class)
     output_dir = f"{output_dir}_{'all' if visible_class is None else '-'.join(map(str, visible_class))}"
 
     output_dir = os.path.join(config.output_dir, output_dir)
@@ -54,6 +55,8 @@ if __name__ == "__main__":
     num_workers = config.num_workers  # 1 if on_server is False else 1
     pin_memory = False if on_server is False else True
 
+    net = Net(training=True, num_organs=num_organs)
+    net.apply(init)
     # net = net.to(device)
     if config.on_gpu:
         gpu_ids = list(range(torch.cuda.device_count()))
@@ -72,14 +75,15 @@ if __name__ == "__main__":
     train_dl = DataLoader(train_ds, batch_size, shuffle, num_workers=num_workers, pin_memory=pin_memory)
 
     # 定义损失函数
-    dice_loss = DiceLoss()
-    ce_loss = CELoss()
+
+    dice_loss = DiceLoss(num_organs)
+    ce_loss = CELoss(num_organs)
 
     # 定义优化器
     opt = torch.optim.Adam(net.parameters(), lr=leaing_rate)
 
     # 学习率衰减
-    lr_decay = torch.optim.lr_scheduler.MultiStepLR(opt, [900])
+    lr_decay = torch.optim.lr_scheduler.MultiStepLR(opt, [800, 1500])
 
     if config.restore_training:
         checkpoint_path = os.path.join(output_dir, config.checkpoint_model_name)

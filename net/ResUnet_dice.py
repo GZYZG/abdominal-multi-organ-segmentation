@@ -13,7 +13,7 @@ from config.config import config
 
 
 dropout_rate = 0.3
-num_organ = 13
+# num_organ = 13
 
 
 # 定义单个3D FCN
@@ -21,7 +21,7 @@ class ResUNet(nn.Module):
     """
     共9332094个可训练的参数, 九百三十万左右
     """
-    def __init__(self, training, inchannel, stage):
+    def __init__(self, training, inchannel, stage, num_organs):
         """
         :param training: 标志网络是属于训练阶段还是测试阶段
         :param inchannel 网络最开始的输入通道数量
@@ -31,6 +31,7 @@ class ResUNet(nn.Module):
 
         self.training = training
         self.stage = stage
+        self.num_organs = num_organs
 
         self.encoder_stage1 = nn.Sequential(
             nn.Conv3d(inchannel, 16, 3, 1, padding=1),
@@ -138,7 +139,7 @@ class ResUNet(nn.Module):
         )
 
         self.map = nn.Sequential(
-            nn.Conv3d(32, num_organ + 1, 1),
+            nn.Conv3d(32, num_organs + 1, 1),
             nn.Softmax(dim=1)
         )
 
@@ -196,13 +197,14 @@ class ResUNet(nn.Module):
 
 # 定义最终的级连3D FCN
 class Net(nn.Module):
-    def __init__(self, training):
+    def __init__(self, training, num_organs):
         super().__init__()
 
         self.training = training
+        self.num_organs = num_organs
 
-        self.stage1 = ResUNet(training=training, inchannel=1, stage='stage1')
-        self.stage2 = ResUNet(training=training, inchannel=num_organ + 2, stage='stage2')
+        self.stage1 = ResUNet(training=training, inchannel=1, stage='stage1', num_organs=num_organs)
+        self.stage2 = ResUNet(training=training, inchannel=self.num_organs + 2, stage='stage2', num_organs=num_organs)
 
     def forward(self, inputs):
         """
@@ -232,15 +234,8 @@ class Net(nn.Module):
             return output_stage2
 
 
-# 网络参数初始化函数
-def init(module):
-    if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d):
-        nn.init.kaiming_normal(module.weight.data, 0.25)
-        nn.init.constant(module.bias.data, 0)
-
-
-net = Net(training=True)
-net.apply(init)
+# net = Net(training=True)
+# net.apply(init)
 
 # # 输出数据维度检查
 # net = net.cuda()

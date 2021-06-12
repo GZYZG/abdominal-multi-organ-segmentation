@@ -5,13 +5,13 @@
 
 import torch.nn as nn
 
-num_organ = 13
+# num_organ = 13
 
 
 class CELoss(nn.Module):
-    def __init__(self):
+    def __init__(self, num_organs):
         super().__init__()
-
+        self.num_organs = num_organs
         self.loss = nn.CrossEntropyLoss()
 
     def forward(self, pred_stage1, pred_stage2, target):
@@ -21,7 +21,7 @@ class CELoss(nn.Module):
         :param pred_stage2: (B, 14, 48, 256, 256)
         :param target: (B, 48, 256, 256)
         """
-
+        num_organ = self.num_organs
         # 计算交叉熵损失值
         loss_stage1 = self.loss(pred_stage1, target)
         loss_stage2 = self.loss(pred_stage2, target)
